@@ -44,8 +44,16 @@ function decodeHtml(s) {
 }
 
 async function fetchRSS() {
-  const res = await fetch(RSS_URL);
-  if (!res.ok) throw new Error(`RSS fetch failed: ${res.status}`);
+  let res;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    res = await fetch(RSS_URL);
+    if (res.ok) break;
+    if (attempt === 3) {
+      console.log(`RSS fetch failed: ${res.status} after 3 attempts, skipping run`);
+      return [];
+    }
+    await new Promise((r) => setTimeout(r, 2000 * attempt));
+  }
   const xml = await res.text();
   const entries = [];
   const entryRe = /<entry>([\s\S]*?)<\/entry>/g;
